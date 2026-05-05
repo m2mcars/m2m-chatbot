@@ -32,7 +32,7 @@ const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1).toLowerCase():"";
 const VALID_LOCATIONS=["Lincoln","Talladega","Sylacauga","Anniston"];
   const processInv=data=>data.filter(v=>VALID_LOCATIONS.includes((v.Location||"").trim())&&v.Price&&parseFloat(v.Price)>0&&v.Year&&v.Make&&v.Model).map((v,i)=>({id:i,s:v.Stock||"",yr:parseInt(v.Year)||0,mk:cap(v.Make.trim()),mo:v.Model.trim().replace(/\s+/g," "),mi:parseInt(v.Miles)||0,cl:cap(v.Color.trim())||"—",lo:(v.Location||"").trim(),pr:parseFloat(v.Price),body:getBody(v.Model)}));
 const RESTRICTED_PRICE=30000;
-  const RESTRICTED_KW=["v8","5.7l","6.2l","6.4l","5.0l","6.7l","6.6l","hemi","corvette","scatpack","scat pack","hellcat","srt","trd pro"];
+  const RESTRICTED_KW=["v8","5.3l","5.7l","6.2l","6.4l","5.0l","6.7l","6.6l","hemi","corvette","scatpack","scat pack","hellcat","srt","trd pro"];
   const isRestricted=v=>v.pr>=RESTRICTED_PRICE||RESTRICTED_KW.some(k=>v.mo.toLowerCase().includes(k));
 const BODY_WORDS={truck:"Truck",trucks:"Truck",pickup:"Truck",suv:"SUV",suvs:"SUV",sedan:"Sedan",sedans:"Sedan",sport:"Sports",sports:"Sports",van:"Van"};
 const S={BROWSE:"browse",RESULTS:"results",INTENT:"intent",TI_VIN:"ti_vin",TI_PAID:"ti_paid",TI_OWED:"ti_owed",TI_HOW:"ti_how",NAME:"name",EMAIL:"email",PHONE:"phone",LOC:"loc",TIME:"time",DONE:"done"};
