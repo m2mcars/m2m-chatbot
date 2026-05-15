@@ -30,7 +30,7 @@ const BODY_MAP={escalade:"SUV",enclave:"SUV",equinox:"SUV",trailblazer:"SUV",tra
 const getBody=mo=>{const k=mo.toLowerCase().replace(/[^a-z0-9]/g,"");for(const[w,t]of Object.entries(BODY_MAP)){if(k.includes(w))return t;}return"Vehicle";};
 const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1).toLowerCase():"";
 const VALID_LOCATIONS=["Lincoln","Talladega","Sylacauga","Anniston"];
-  const processInv=data=>data.filter(v=>VALID_LOCATIONS.includes((v.Location||"").trim())&&v.Price!==undefined&&v.Price!==null&&v.Year&&v.Make&&v.Model&&v.Year&&v.Make&&v.Model).map((v,i)=>({id:i,s:v.Stock||"",yr:parseInt(v.Year)||0,mk:cap(v.Make.trim()),mo:v.Model.trim().replace(/\s+/g," "),mi:parseInt(v.Miles)||0,cl:cap(v.Color.trim())||"—",lo:(v.Location||"").trim(),pr:parseFloat(v.Price)||0,body:getBody(v.Model)}));
+  const processInv=data=>data.filter(v=>VALID_LOCATIONS.includes((v.Location||"").trim())&&v.Price!==undefined&&v.Price!==null&&v.Year&&v.Make&&v.Model&&v.Year&&v.Make&&v.Model).map((v,i)=>({id:i,s:v.Stock||"",yr:parseInt(v.Year)||0,mk:cap(v.Make.trim()),mo:v.Model.trim().replace(/\s+/g," "),mi:parseInt(v.Miles)||0,cl:cap(v.Color.trim())||"—",lo:(v.Location||"").trim(),pr:parseFloat((v.Price||"").toString().replace(/,/g,""))||0,body:getBody(v.Model)}));
 const RESTRICTED_PRICE=30000;
   const RESTRICTED_KW=["v8","5.3l","5.7l","6.2l","6.4l","5.0l","6.7l","6.6l","hemi","corvette","scatpack","scat pack","hellcat","srt","trd pro"];
   const isRestricted=v=>v.pr>=RESTRICTED_PRICE||RESTRICTED_KW.some(k=>v.mo.toLowerCase().includes(k));
