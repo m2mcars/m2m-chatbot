@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>M2M Auto Sales — Virtual Sales Assistant</title>
+  <title>M&M Auto Sales — Virtual Sales Assistant</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -56,7 +56,7 @@ function App(){
   const endRef=useRef(null);
   useEffect(()=>{endRef.current?.scrollIntoView({behavior:"smooth"});},[msgs,busy]);
   useEffect(()=>{fetch(GITHUB_URL+"?t="+Date.now()).then(r=>r.json()).then(data=>{const p=processInv(data);if(p.length>0)setInv(p);}).catch(()=>{});},[]);
-  useEffect(()=>{if(open&&msgs.length===0)setTimeout(()=>addBot(`Hey there! 👋 Welcome to M2M Auto Sales!\n\nI have ${inv.length} vehicles across our Lincoln, Talladega, Sylacauga, and Anniston locations.\n\nWhat are you looking for today?`,MAIN_OPTS),400);},[open,inv]);
+  useEffect(()=>{if(open&&msgs.length===0)setTimeout(()=>addBot(`Hey there! 👋 Welcome to M&M Auto Sales!\n\nI have ${inv.length} vehicles across our Lincoln, Talladega, Sylacauga, and Anniston locations.\n\nWhat are you looking for today?`,MAIN_OPTS),400);},[open,inv]);
   const MAIN_OPTS=[{label:"🚛 Truck",val:"body:Truck"},{label:"🚙 SUV",val:"body:SUV"},{label:"🚗 Sedan",val:"body:Sedan"},{label:"🏎️ Sports",val:"body:Sports"},{label:"🔍 By make",val:"ask:make"},{label:"💰 By budget",val:"ask:budget"}];
   const addBot=(text,opts=null,comp=null)=>{setBusy(true);setTimeout(()=>{setBusy(false);setMsgs(p=>[...p,{role:"bot",text,opts,comp,id:Date.now()+Math.random(),used:false}]);},400+Math.min(text.length*6,800));};
   const addUser=text=>setMsgs(p=>[...p,{role:"user",text,id:Date.now()+Math.random()}]);
@@ -87,7 +87,7 @@ function App(){
       <div className="max-w-lg w-full">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-6 text-center">
-            <div className="text-3xl font-bold">M2M Auto Sales</div>
+            <div className="text-3xl font-bold">M&M Auto Sales</div>
             <div className="text-red-100 text-sm mt-1">Lincoln • Talladega • Sylacauga • Anniston, AL</div>
             <div className="mt-2 text-sm text-red-100">{inv.length} vehicles available</div>
           </div>
@@ -117,7 +117,7 @@ function App(){
                   <input type="text" value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&inp.trim()&&send(inp.trim())} placeholder="Type a message..." style={{flex:1,border:"1px solid #e5e7eb",borderRadius:"999px",padding:"8px 16px",fontSize:"14px",outline:"none"}}/>
                   <button onClick={()=>inp.trim()&&send(inp.trim())} disabled={!inp.trim()} style={{background:inp.trim()?"#dc2626":"#d1d5db",color:"white",border:"none",borderRadius:"50%",width:"36px",height:"36px",cursor:"pointer",fontSize:"16px"}}>➤</button>
                 </div>
-                <div style={{textAlign:"center",fontSize:"10px",color:"#9ca3af",marginTop:"6px"}}>M2M Auto Sales • Powered by AI</div>
+                <div style={{textAlign:"center",fontSize:"10px",color:"#9ca3af",marginTop:"6px"}}>M&M Auto Sales • Powered by AI</div>
               </div>
             </div>
           )}
