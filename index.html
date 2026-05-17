@@ -56,7 +56,7 @@ function App(){
   const endRef=useRef(null);
   useEffect(()=>{endRef.current?.scrollIntoView({behavior:"smooth"});},[msgs,busy]);
   useEffect(()=>{fetch(GITHUB_URL+"?t="+Date.now()).then(r=>r.json()).then(data=>{const p=processInv(data);if(p.length>0)setInv(p);}).catch(()=>{});},[]);
-  useEffect(()=>{if(open&&msgs.length===0)setTimeout(()=>addBot(`Hi there! I am Sarah from M&M Auto Sales. I am here to make finding your next car easy and fun — and I can help with everything right here in the chat, from finding the right car to scheduling your test drive. What are you looking for today?`,MAIN_OPTS),400);},[open,inv]);
+  useEffect(()=>{if(open&&msgs.length===0)setTimeout(()=>addBot(`Hi there! I am Sarah Carter from M&M Auto Sales. I am here to make finding your next car easy and fun — and I can help with everything right here in the chat, from finding the right car to scheduling your test drive. What are you looking for today?`),400);},[open,inv]);
   const MAIN_OPTS=[{label:"🚛 Truck",val:"body:Truck"},{label:"🚙 SUV",val:"body:SUV"},{label:"🚗 Sedan",val:"body:Sedan"},{label:"🏎️ Sports",val:"body:Sports"},{label:"🔍 By make",val:"ask:make"},{label:"💰 By budget",val:"ask:budget"}];
   const addBot=(text,opts=null,comp=null)=>{setBusy(true);setTimeout(()=>{setBusy(false);setMsgs(p=>[...p,{role:"bot",text,opts,comp,id:Date.now()+Math.random(),used:false}]);},400+Math.min(text.length*6,800));};
   const addUser=text=>setMsgs(p=>[...p,{role:"user",text,id:Date.now()+Math.random()}]);
@@ -186,9 +186,9 @@ ${inventoryText}`;const response=await fetch("/api/sarah",{method:"POST",headers
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
       <div className="max-w-lg w-full">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4"><div className="flex items-center gap-3"><div style={{width:'56px',height:'56px',borderRadius:'50%',overflow:'hidden',border:'2px solid rgba(255,255,255,0.5)',flexShrink:0}}><img src="/assets/sarah.png" alt="Sarah" style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center 8%'}}/></div><div>
-            <div className="text-xl font-bold">Sarah</div>
-            <div className="text-red-100 text-sm mt-0.5">M&M Auto Sales — Your Car Advisor</div><div className="flex items-center gap-1 mt-0.5"><div style={{width:'8px',height:'8px',borderRadius:'50%',background:'#4caf50'}}></div><span className="text-red-100 text-xs">Online now</span></div>
+          <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4"><div className="flex items-center gap-3"><div style={{width:'56px',height:'56px',borderRadius:'50%',overflow:'hidden',border:'2px solid rgba(255,255,255,0.5)',flexShrink:0}}><img src="/assets/sarah.png" alt="Sarah Carter" style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center 8%'}}/></div><div>
+            <div className="text-xl font-bold">Sarah Carter</div>
+            <div className="text-red-100 text-sm mt-0.5">M&M Auto Sales</div><div className="flex items-center gap-1 mt-0.5"><div style={{width:'8px',height:'8px',borderRadius:'50%',background:'#4caf50'}}></div><span className="text-red-100 text-xs">Online now</span></div>
             </div></div>
           </div>
           {!open?(
@@ -217,7 +217,7 @@ ${inventoryText}`;const response=await fetch("/api/sarah",{method:"POST",headers
                   <input type="text" value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&inp.trim()&&send(inp.trim())} placeholder="Type a message..." style={{flex:1,border:"1px solid #e5e7eb",borderRadius:"999px",padding:"8px 16px",fontSize:"14px",outline:"none"}}/>
                   <button onClick={()=>inp.trim()&&send(inp.trim())} disabled={!inp.trim()} style={{background:inp.trim()?"#dc2626":"#d1d5db",color:"white",border:"none",borderRadius:"50%",width:"36px",height:"36px",cursor:"pointer",fontSize:"16px"}}>➤</button>
                 </div>
-                <div style={{textAlign:"center",fontSize:"10px",color:"#9ca3af",marginTop:"6px"}}>M&M Auto Sales • Powered by AI</div>
+                <div style={{textAlign:"center",fontSize:"10px",color:"#9ca3af",marginTop:"6px"}}>M&M Auto Sales Assistant</div>
               </div>
             </div>
           )}
