@@ -1,0 +1,9 @@
+{
+  "name": "m2m-chatbot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "M2M Auto Sales AI chatbot (Sarah).",
+  "scripts": {
+    "test": "node test/inventory.test.js"
+  }
+}
