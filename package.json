@@ -4,6 +4,10 @@
   "private": true,
   "description": "M2M Auto Sales AI chatbot (Sarah).",
   "scripts": {
-    "test": "node test/inventory.test.js"
+    "test": "node test/inventory.test.js && node test/sarah.test.js"
+  },
+  "dependencies": {
+    "@upstash/ratelimit": "^2.0.5",
+    "@upstash/redis": "^1.34.3"
   }
 }
