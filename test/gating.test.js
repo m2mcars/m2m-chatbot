@@ -16,7 +16,7 @@ if (!m) throw new Error("Could not extract pure functions from index.html");
 const mod = { exports: {} };
 new Function("module", "exports", m[0])(mod, mod.exports);
 const {
-  isRestricted, bookingGate, escalateNoteFor, vehicleShowLine,
+  isRestricted, isCashIntent, bookingGate, escalateNoteFor, vehicleShowLine,
   selectVehicles, parseShowMarker, classifyRequest,
   RESTRICTED_KW, RESTRICTED_PRICE, SCHED_PROMISE_RE, matchVehicleFromText,
 } = mod.exports;
@@ -38,14 +38,23 @@ RESTRICTED_KW.forEach(k =>
   check("restricted by keyword '" + k + "' even under $30k",
     isRestricted({ mo: "2019 Test " + k.toUpperCase() + " Edition", pr: 15000 }) === true));
 
-console.log("\n(FIX 2b) restricted vehicles never reach a booking");
-check("restricted-by-price blocks booking", bookingGate(pricey, "cash", contact) === "restricted");
-check("restricted-by-keyword blocks booking", bookingGate({ mo: "Mustang GT 5.0L", pr: 28750 }, "cash", contact) === "restricted");
-check("customer insisting cannot bypass: gate ignores intent/contact completeness",
-  bookingGate(pricey, "finance", contact) === "restricted" &&
-  bookingGate(pricey, "cash", contact) === "restricted" &&
-  bookingGate(pricey, null, {}) === "restricted");
-check("non-restricted vehicle books normally", bookingGate(plain, "cash", contact) === null);
+console.log("\n(GATE RULE) payment method x vehicle status");
+check("restricted + finance blocks booking (by price)", bookingGate(pricey, "finance", contact) === "restricted");
+check("restricted + finance blocks booking (by keyword)", bookingGate({ mo: "Mustang GT 5.0L", pr: 28750 }, "finance", contact) === "restricted");
+check("restricted + CASH schedules directly (nothing to pre-qualify)", bookingGate(pricey, "cash", contact) === null);
+check("restricted + trade-in with cash difference schedules directly",
+  bookingGate(pricey, "trade-in-cash", contact) === null && bookingGate(pricey, "trade-in + cash", contact) === null);
+check("restricted + trade-in with financed difference blocks",
+  bookingGate(pricey, "trade-in-finance", contact) === "restricted" && bookingGate(pricey, "trade-in + finance", contact) === "restricted");
+check("restricted + bare trade-in (financing undetermined) blocks", bookingGate(pricey, "trade-in", contact) === "restricted");
+check("restricted + unknown intent asks for intent first", bookingGate(pricey, null, contact) === "no_intent");
+check("customer insisting on financed restricted cannot bypass: gate ignores contact completeness",
+  bookingGate(pricey, "finance", contact) === "restricted" && bookingGate(pricey, "finance", {}) === "restricted");
+check("standard vehicle + cash books normally", bookingGate(plain, "cash", contact) === null);
+check("standard vehicle + finance books normally", bookingGate(plain, "finance", contact) === null);
+check("isCashIntent: cash-like vs finance-like",
+  isCashIntent("cash") && isCashIntent("CASH") && isCashIntent("trade-in + cash") && isCashIntent("trade-in-cash") &&
+  !isCashIntent("finance") && !isCashIntent("trade-in") && !isCashIntent("trade-in-finance") && !isCashIntent(null));
 
 console.log("\n(FIX 2c) lead notification carries the restricted tag");
 check("restricted_prequal reason produces tagged note",
@@ -100,6 +109,24 @@ const r2 = classifyRequest("what do you have at sylacauga", presentInv);
 check("'what do you have at sylacauga' -> show with loc", r2.action === "show" && r2.criteria.loc === "Sylacauga", JSON.stringify(r2.criteria));
 const r3 = classifyRequest("I need a truck", presentInv);
 check("plain broad request still asks, no loc", r3.action === "ask" && r3.criteria.loc === null, JSON.stringify(r3));
+
+console.log("\n(FILTERS) price floor and show-command routing");
+check("marker min parsed", parseShowMarker("SHOW_CARS: type=truck | make=any | model=any | max=none | min=30000 | loc=any").min === 30000);
+check("marker min=none -> null", parseShowMarker("SHOW_CARS: type=truck | make=any | model=any | max=none | min=none | loc=any").min === null);
+const minInv = [
+  { mk: "Nissan", mo: "Frontier SV", pr: 19500, lo: "Lincoln", body: "Truck" },
+  { mk: "Gmc", mo: "Sierra 1500 Elevation", pr: 34995, lo: "Anniston", body: "Truck" },
+  { mk: "Gmc", mo: "Sierra 1500 Denali 6.2L", pr: 36500, lo: "Lincoln", body: "Truck" },
+];
+const over30 = selectVehicles(minInv, { type: "truck", min: 30000 });
+check("min filter keeps only trucks >= $30k, sorted ascending",
+  over30.length === 2 && over30[0].pr === 34995 && over30[1].pr === 36500, JSON.stringify(over30.map(v => v.pr)));
+const r4 = classifyRequest("show me trucks over $30,000", minInv);
+check("'trucks over $30,000' -> show with min=30000", r4.action === "show" && r4.criteria.min === 30000, JSON.stringify(r4.criteria));
+const r5 = classifyRequest("show me your trucks", minInv);
+check("'show me your trucks' -> show (command, not a question)", r5.action === "show", JSON.stringify(r5.signals));
+const r6 = classifyRequest("I need a truck", minInv);
+check("'I need a truck' still asks first", r6.action === "ask", JSON.stringify(r6.signals));
 
 console.log("\n(DEAD-END REGRESSION) a scheduling promise always routes through the booking gate");
 // Exact reply from the QA transcript that previously dead-ended with no calendar.
