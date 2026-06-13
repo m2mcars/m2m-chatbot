@@ -18,7 +18,7 @@ new Function("module", "exports", m[0])(mod, mod.exports);
 const {
   isRestricted, isCashIntent, bookingGate, escalateNoteFor, vehicleShowLine,
   selectVehicles, parseShowMarker, classifyRequest,
-  RESTRICTED_KW, RESTRICTED_PRICE, SCHED_PROMISE_RE, matchVehicleFromText,
+  RESTRICTED_KW, RESTRICTED_PRICE, SCHED_PROMISE_RE, matchVehicleFromText, notifyVehicle,
 } = mod.exports;
 
 let failures = 0;
@@ -153,6 +153,31 @@ check("stock-number reference resolves", matchVehicleFromText("let's do stock 22
 check("ambiguous mention of two vehicles resolves to none",
   matchVehicleFromText("is the 2022 sierra nicer than the 2020 sierra?", shownTrucks) === null);
 check("unrelated message resolves to none", matchVehicleFromText("do you have any vans?", shownTrucks) === null);
+
+console.log("\n(BUG G) selected-vehicle context reaches the notify payload (no Lincoln misroute)");
+// Full inventory, no list rendered yet this session: a customer who names or
+// pastes a real vehicle must still have it captured, so escalation/incomplete
+// notify payloads carry the real stock/location/price instead of defaulting
+// to empty + Lincoln.
+const focusInv = [
+  { s: "308416", yr: 2018, mk: "Ford", mo: "FOCUS SE", pr: 7500, cl: "White", lo: "Talladega", mi: 113955, body: "Sedan" },
+  { s: "725110", yr: 2019, mk: "Toyota", mo: "Camry SE", pr: 14995, cl: "White", lo: "Lincoln", mi: 144090, body: "Sedan" },
+  { s: "459905", yr: 2016, mk: "Cadillac", mo: "Escalade Luxury 4WD", pr: 25995, cl: "White", lo: "Anniston", mi: 98204, body: "SUV" },
+];
+// The exact Bug-G repro: pasted listing line, no stock number, no prior list.
+const resolved = matchVehicleFromText("2018 Ford FOCUS SE — $7,500 plus taxes and fees, White, 113,955 miles", focusInv);
+check("pasted vehicle line resolves against full inventory (stock + location)",
+  resolved && resolved.s === "308416" && resolved.lo === "Talladega", JSON.stringify(resolved));
+const populated = notifyVehicle(resolved);
+check("notify payload carries the real stock/location/price (routes to Talladega)",
+  populated.stock === "308416" && populated.location === "Talladega" && populated.price === 7500, JSON.stringify(populated));
+const blank = notifyVehicle(null);
+check("no resolved vehicle -> blank payload (the API's logged Lincoln-fallback case)",
+  blank.stock === "" && blank.location === "" && blank.price === 0, JSON.stringify(blank));
+check("escalation location override pins routing", notifyVehicle(resolved, "Anniston").location === "Anniston");
+check("280 alias maps to Sylacauga in the payload", notifyVehicle({ s: "1", lo: "280" }).location === "Sylacauga");
+check("ambiguous reference does not falsely capture a vehicle",
+  matchVehicleFromText("looking for a white sedan", focusInv) === null);
 
 console.log("\n" + (failures ? "FAILED: " + failures + " check(s)" : "ALL CHECKS PASSED") + "\n");
 process.exit(failures ? 1 : 0);
