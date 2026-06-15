@@ -21,7 +21,7 @@ const pureBlock = grab(
 );
 const mod = { exports: {} };
 new Function("module", "exports", pureBlock)(mod, mod.exports);
-const { selectVehicles, parseShowMarker, vehicleShowLine, classifyRequest } = mod.exports;
+const { selectVehicles, parseShowMarker, vehicleShowLine, critKey, pageVehicles, classifyRequest } = mod.exports;
 
 // Build a realistic inventory for classifyRequest's make/model vocabulary,
 // plus a synthetic, deliberately price-scrambled set to prove sorting.
@@ -133,6 +133,43 @@ console.log("\n(d) rendered line is plain text (no emoji/cards) and includes pri
 const line = vehicleShowLine({ yr: 2015, mk: "Cadillac", mo: "CTS Luxury", pr: 11995, cl: "Gray", lo: "Talladega", mi: 119976 });
 check("vehicleShowLine: has 'plus taxes and fees'", /plus taxes and fees/.test(line), line);
 check("vehicleShowLine: no emoji/pin", !/[📍⭐🚗💰]/.test(line), line);
+
+console.log("\n(e) STYLE/ENGINE MAPPING + NO-MATCH (never a silent cheapest dump)");
+// Style categories must reach actual sports/muscle cars.
+["sporty", "muscle", "performance", "sport"].forEach(term => {
+  const r = selectVehicles(inv, { type: term });
+  check(`style term "${term}" -> Sports cars only`, r.length > 0 && r.every(v => v.body === "Sports"), r.map(v => v.mo).join(", "));
+});
+// Engine type (V6/V8) is NOT in the inventory data: a marker that tries to
+// filter by it must yield NO matches (so the caller shows an honest no-match),
+// never a silently price-sorted full list.
+["v6", "v8", "fourcylinder", "diesel"].forEach(term => {
+  const r = selectVehicles(inv, { type: term });
+  check(`unsupported engine/type "${term}" -> 0 matches, not the cheap default`, r.length === 0, prices(r));
+});
+check("no-match does NOT fall back to the full inventory", selectVehicles(inv, { type: "v6" }).length !== inv.length);
+check("type=any still returns everything (not treated as unknown)", selectVehicles(inv, { type: "any" }).length === inv.length);
+
+console.log("\n(f) PAGINATION: 'show more' advances, then reports end-of-list");
+const sportsAll = selectVehicles(inv, { type: "sports" }); // 2 in this inv: Camaro 23500, Mustang 28750
+check("sports pool has the expected 2 cars", sportsAll.length === 2, prices(sportsAll));
+const big = selectVehicles(inv, { type: "truck" }); // 6 trucks -> needs 2 pages at size 4
+check("truck pool spans more than one page", big.length > 4, prices(big));
+const p1 = pageVehicles(big, 0, 4);
+check("page 1: first 4, more remain", p1.items.length === 4 && p1.hasMore === true && p1.nextOffset === 4);
+const p2 = pageVehicles(big, p1.nextOffset, 4);
+check("page 2: the NEXT vehicles, not a repeat", p2.items.length === big.length - 4 && p2.items.every(v => !p1.items.includes(v)), prices(p2.items));
+check("page 2: no more pages left", p2.hasMore === false);
+const p3 = pageVehicles(big, p2.nextOffset, 4);
+check("paging past the end returns empty + end flag (say 'that is everything')", p3.items.length === 0 && p3.end === true);
+check("fresh empty query is NOT flagged as end-of-list (it is a no-match)", pageVehicles([], 0, 4).end === false);
+
+// critKey: same search repeats (=> paginate), changed search restarts (=> page 0).
+const kA = critKey(parseShowMarker("SHOW_CARS: type=truck | make=any | model=any | max=none | min=none | loc=any"));
+const kA2 = critKey(parseShowMarker("SHOW_CARS: type=truck | make=any | model=any | max=none | min=none | loc=any"));
+const kB = critKey(parseShowMarker("SHOW_CARS: type=suv | make=any | model=any | max=none | min=none | loc=any"));
+check("critKey: identical search -> identical key (more = paginate)", kA === kA2);
+check("critKey: different search -> different key (restart at page 1)", kA !== kB);
 
 console.log("\n" + (failures ? "FAILED: " + failures + " check(s)" : "ALL CHECKS PASSED") + "\n");
 process.exit(failures ? 1 : 0);
