@@ -99,6 +99,16 @@ check("car + max=16000: price ascending", isAscending(carsUnder16k), prices(cars
 const any = selectVehicles(inv, { type: "any" });
 check("type=any: returns whole inventory, price ascending", any.length === inv.length && isAscending(any), prices(any));
 
+// "sporty" must reach actual sports/muscle cars, not the cheapest economy
+// sedans. type=sports filters to Sports bodies only (e.g. Mustang, Camaro) —
+// the capability the SHOW_CARS marker now exposes to the model.
+const sports = selectVehicles(inv, { type: "sports" });
+check("type=sports: only Sports-body cars", sports.length > 0 && sports.every(v => v.body === "Sports"), prices(sports));
+check("type=sports: excludes economy sedans", !sports.some(v => v.body === "Sedan"), sports.map(v => v.mo).join(", "));
+check("type=sports: price ascending", isAscending(sports), prices(sports));
+check("type=sports: differs from type=car (sedans dropped)",
+  selectVehicles(inv, { type: "car" }).some(v => v.body === "Sedan") && !sports.some(v => v.body === "Sedan"));
+
 console.log("\n(b) marker parsing feeds selection correctly");
 const crit = parseShowMarker("SHOW_CARS: type=truck | make=any | model=Silverado | max=none");
 check("parseShowMarker: type", crit.type === "truck");
@@ -107,6 +117,10 @@ check("parseShowMarker: model", crit.model === "Silverado");
 check("parseShowMarker: max=none -> null", crit.max === null);
 const crit2 = parseShowMarker("SHOW_CARS: type=car | make=Toyota | model=Camry | max=17000");
 check("parseShowMarker: numeric max", crit2.max === 17000);
+const crit3 = parseShowMarker("SHOW_CARS: type=sports | make=any | model=any | max=none | min=none | loc=any");
+check("parseShowMarker: type=sports passes through", crit3.type === "sports");
+check("parseShowMarker: type=sports feeds selection to Sports only",
+  selectVehicles(inv, crit3).every(v => v.body === "Sports"));
 
 console.log("\n(c) ROUTING: specific/superlative -> show, vague -> ask");
 const showCases = ["cheapest car", "cheapest truck you have", "most affordable SUV",
