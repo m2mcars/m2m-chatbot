@@ -21,7 +21,7 @@ const pureBlock = grab(
 );
 const mod = { exports: {} };
 new Function("module", "exports", pureBlock)(mod, mod.exports);
-const { selectVehicles, parseShowMarker, vehicleShowLine, critKey, pageVehicles, classifyRequest } = mod.exports;
+const { selectVehicles, parseShowMarker, vehicleShowLine, critKey, pageVehicles, fixFinanceLink, reconcileStyleClaim, classifyRequest } = mod.exports;
 
 // Build a realistic inventory for classifyRequest's make/model vocabulary,
 // plus a synthetic, deliberately price-scrambled set to prove sorting.
@@ -170,6 +170,47 @@ const kA2 = critKey(parseShowMarker("SHOW_CARS: type=truck | make=any | model=an
 const kB = critKey(parseShowMarker("SHOW_CARS: type=suv | make=any | model=any | max=none | min=none | loc=any"));
 check("critKey: identical search -> identical key (more = paginate)", kA === kA2);
 check("critKey: different search -> different key (restart at page 1)", kA !== kB);
+
+console.log("\n(g) FINANCE-LINK INTEGRITY (must match the picked vehicle's location)");
+const TALL = "https://www.m2mdega.com/apply-online/";
+const ANNI = "https://www.drivemcqueen.com/apply-online/";
+const SYL = "https://mmautosales2.com/creditapp";
+// QA #11: a Talladega car got Anniston's drivemcqueen link -> must be rewritten to m2mdega.
+check("wrong store's link is corrected to the vehicle's location",
+  fixFinanceLink("Here you go! " + ANNI, TALL) === "Here you go! " + TALL,
+  fixFinanceLink("Here you go! " + ANNI, TALL));
+// QA #17: emitted wrong link then self-corrected -> customer must see ONE correct link.
+check("two links (self-correction) collapse to a single correct link",
+  fixFinanceLink("Apply here " + ANNI + " " + TALL, TALL) === "Apply here " + TALL,
+  fixFinanceLink("Apply here " + ANNI + " " + TALL, TALL));
+check("a www-only / scheme-less variant is still normalized",
+  fixFinanceLink("link: http://drivemcqueen.com/apply-online", TALL) === "link: " + TALL,
+  fixFinanceLink("link: http://drivemcqueen.com/apply-online", TALL));
+check("Sylacauga creditapp form is recognized and corrected",
+  fixFinanceLink("go to " + ANNI, SYL) === "go to " + SYL, fixFinanceLink("go to " + ANNI, SYL));
+check("an already-correct link is left untouched", fixFinanceLink("apply: " + TALL, TALL) === "apply: " + TALL);
+check("text with no finance link is unchanged", fixFinanceLink("Thanks, talk soon!", TALL) === "Thanks, talk soon!");
+
+console.log("\n(h) STYLE-CLAIM RECONCILIATION (no economy cars dressed up as sporty)");
+check("'sporty' framing forces type=sports even if marker said car",
+  reconcileStyleClaim({ type: "car" }, "Here are some great sporty options!").type === "sports");
+check("'muscle cars' framing forces type=sports",
+  reconcileStyleClaim({ type: "any" }, "Oh we have some fun muscle cars!").type === "sports");
+check("non-style framing leaves the marker alone",
+  reconcileStyleClaim({ type: "truck" }, "Here are some trucks for hauling.").type === "truck");
+check("already-sports marker is unchanged",
+  reconcileStyleClaim({ type: "sports" }, "sporty picks").type === "sports");
+check("style claim + economy marker then selects only Sports bodies",
+  selectVehicles(inv, reconcileStyleClaim({ type: "car" }, "sporty options")).every(v => v.body === "Sports"));
+
+console.log("\n(i) EMAIL CAPTURE keeps plus-addressing (data integrity, QA email bug)");
+// The exact QA bug: qa+c11@example.com was captured as c11@example.com.
+const EMAIL_RE = /[\w.+-]+@[\w.-]+\.\w+/;
+check("plus-addressed email is captured whole, not truncated",
+  "qa+c11@example.com".match(EMAIL_RE)[0] === "qa+c11@example.com",
+  "qa+c11@example.com".match(EMAIL_RE)[0]);
+check("plain email still matches", "jane@example.com".match(EMAIL_RE)[0] === "jane@example.com");
+check("dotted+plus email matches", "first.last+tag@mail.co".match(EMAIL_RE)[0] === "first.last+tag@mail.co");
 
 console.log("\n" + (failures ? "FAILED: " + failures + " check(s)" : "ALL CHECKS PASSED") + "\n");
 process.exit(failures ? 1 : 0);
