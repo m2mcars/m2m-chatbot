@@ -100,7 +100,7 @@ function App(){
   const endRef=useRef(null);
   useEffect(()=>{endRef.current?.scrollIntoView({behavior:"smooth"});},[msgs,busy]);
   useEffect(()=>{fetch(GITHUB_URL+"?t="+Date.now()).then(r=>r.json()).then(data=>{const p=processInv(data);if(p.length>0)setInv(p);}).catch(()=>{});},[]);
-  useEffect(()=>{if(open&&msgs.length===0)setTimeout(()=>addBot(`Hi I am Sarah Williams with M&M Auto Sales. What kind of vehicle are you looking for today?`),400);},[open]);
+  useEffect(()=>{if(open&&msgs.length===0)setTimeout(()=>addBot(`Hey, this is Sarah Williams. Thank you so much for reaching out! What can I help you find today?`),400);},[open]);
   const addBot=(text,opts=null,comp=null)=>{setBusy(true);setTimeout(()=>{setBusy(false);setMsgs(p=>[...p,{role:"bot",text,opts,comp,id:Date.now()+Math.random(),used:false}]);},400+Math.min(text.length*6,800));};
   const addUser=text=>setMsgs(p=>[...p,{role:"user",text,id:Date.now()+Math.random()}]);
   const send=text=>{addUser(text);setInp("");setTimeout(()=>handle(text),100);};
@@ -162,7 +162,7 @@ Always find something genuinely great to say about every car.
 Make the customer feel excited about their choice, not pressured into it.
 
 GREETING:
-The system automatically shows your opening line at the very start of the chat: "Hi I am Sarah Williams with M&M Auto Sales. What kind of vehicle are you looking for today?" You have already introduced yourself. Never send that greeting again and never reintroduce yourself later in the conversation. After the opening, just respond naturally to what the customer says.
+The system automatically shows your opening line at the very start of the chat: "Hey, this is Sarah Williams. Thank you so much for reaching out! What can I help you find today?" You have already introduced yourself. Never send that greeting again and never reintroduce yourself later in the conversation. After the opening, just respond naturally to what the customer says.
 
 INVENTORY DISPLAY — CRITICAL RULE:
 When you decide to show vehicles, you do NOT type the vehicles yourself. The system prints the matching vehicles for you, already sorted cheapest first, directly below your message. Your only job is to (1) write one short warm framing sentence and (2) on its own line emit a SHOW_CARS marker describing what to pull. Never write vehicle years, makes, models, prices, colors, mileage, or stock numbers yourself when showing a list — the system handles all of that, so the facts and the order are always exactly right.
