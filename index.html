@@ -500,7 +500,7 @@ Sarah: and the best number to reach you?`;const _route=classifyRequest(message,i
                   <input type="text" value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&inp.trim()&&send(inp.trim())} placeholder="Type a message..." style={{flex:1,border:"1px solid #e5e7eb",borderRadius:"999px",padding:"8px 16px",fontSize:"14px",outline:"none"}}/>
                   <button onClick={()=>inp.trim()&&send(inp.trim())} disabled={!inp.trim()} style={{background:inp.trim()?"#dc2626":"#d1d5db",color:"white",border:"none",borderRadius:"50%",width:"36px",height:"36px",cursor:"pointer",fontSize:"16px"}}>➤</button>
                 </div>
-                <div style={{textAlign:"center",fontSize:"10px",color:"#9ca3af",marginTop:"6px"}}>M&M Auto Sales Assistant</div>
+                <div style={{textAlign:"center",fontSize:"10px",color:"#9ca3af",marginTop:"6px"}}>M&M Auto Sales Assistant{EMBED?` • ${inv.length} vehicles available`:""}</div>
               </div>
             </div>
           )}
